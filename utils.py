@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import torch
+from torch import nn
 from IPython.display import HTML
 
 def plot(x, t, u, is_heat):
@@ -16,6 +18,26 @@ def plot(x, t, u, is_heat):
     label = 'Temperature' if is_heat else 'Displacement'
     X,T = np.meshgrid(x,t)
     cp = ax.contourf(X, T, u, cmap='RdBu_r')
+    ax.set_xlabel('Position')
+    ax.set_ylabel('Time (s)')
+    ax.set_title(type_of_plot)
+    fig.colorbar(cp, label=label)
+    plt.show()
+    return
+
+def transport_plot(x, t, u):
+    '''
+    x: space domain
+    t: time domain
+    u: solution matrix
+    is_heat: bool
+    '''
+    fig, ax = plt.subplots(figsize=(10,6))
+
+    type_of_plot = 'Transport Equation'
+    label = 'u(x,t)'
+    X,T = np.meshgrid(x,t)
+    cp = ax.contourf(X, T, u, cmap='viridis')
     ax.set_xlabel('Position')
     ax.set_ylabel('Time (s)')
     ax.set_title(type_of_plot)
@@ -48,5 +70,32 @@ def animated_plot(x, t, u, is_dirichlet, is_heat):
         return line, legend
     
     ani = animation.FuncAnimation(fig=fig, func=update, frames=range(0,len(t), len(t)//300), interval=30)
+    plt.close(fig)
+    return ani
+
+def transport_animated_plot(x, t, u):
+    '''
+    x: space domain
+    t: time domain
+    u: solution matrix
+    is_dirichlet: bool
+    is_heat: bool
+    '''
+    fig, ax = plt.subplots()
+    title = 'Transport Equation'
+    ylabel = 'u(x,t)'
+    line = ax.plot(x, u[0, :], label='t = 0.0')[0]
+    ax.set(xlim=[x.min(), x.max()], ylim= [u.min(), u.max()], xlabel='Position', ylabel=ylabel, 
+           title=f"Solution to {title}")
+    
+    legend = ax.legend(loc="upper right")  
+    
+    def update(frame):
+        line.set_ydata(u[frame, :])
+        line.set_label(f"t = {t[frame]:.3f}")
+        ax.legend(loc="upper right")
+        return line, legend
+    
+    ani = animation.FuncAnimation(fig=fig, func=update, frames=range(0, len(t)), interval=30)
     plt.close(fig)
     return ani
